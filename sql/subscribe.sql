@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO subscribers(chat_id,coin) VALUES(?,?);
