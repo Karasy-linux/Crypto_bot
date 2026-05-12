@@ -10,23 +10,24 @@ bot = telebot.TeleBot(token=TOKEN)
 
 @bot.message_handler(commands=['start'])
 def cmd_start(message: Message) -> None:
-    try:
-        user_name = message.from_user.username
-        chat_id = message.chat.id
+    user_name = message.from_user.username
+    chat_id = message.chat.id
 
-
-        get_data.add_user_info(chat_id, user_name if user_name else "user")
+    text = ( 
+        f"Hello, {user_name if not user_name is None else "user"}" 
+        "\nthis bot for" 
+        " to monitoring "
+        "\ncoins" \
+        " Commands: " \
+        "\n/subcribes"
+        "\n/prices" \
+            )
     
-        text = ( 
-            f"Hello, {user_name if not user_name is None else "user"}" 
-            "\nthis bot for" 
-            " to monitoring "
-            "\ncryptovaults" \
-            " Commands: " \
-            "\n/subcribes" \
-            "\n/button"
-                )
-        bot.reply_to(message=message, text=text)
+
+    bot.reply_to(message=message, text=text)
+    try:
+        get_data.add_user_info(chat_id, user_name if user_name else "user")
+
     except Error as e:
         print(f"beda: {e}")
 
