@@ -1,5 +1,4 @@
 from sqlite3 import Error
-import time
 import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
 
@@ -19,8 +18,8 @@ def cmd_start(message: Message) -> None:
         " to monitoring "
         "\ncoins" \
         " Commands: " \
-        "\n/subcribes"
-        "\n/prices" \
+        "\n/subscribe"
+        "\n/price" \
             )
     
 
@@ -33,55 +32,55 @@ def cmd_start(message: Message) -> None:
 
 
 
+SUPPORTED_COINS = ['bitcoin','ethereum','solana']
+@bot.message_handler(commands=['subscribe'])
+def cmd_subscribe(message: Message) -> None:
 
-@bot.message_handler(commands=['subcribes'])
-def cmd_crypto_sub(message: Message) -> None:
-    text = (
-        "subscribe to coins:"
-        "\n /bitcoin"
-        "\n /ethereum"
-        "\n /solana"
-        )
+    parts = message.text.split()
     
-    bot.reply_to(message=message,text=text)
+    if len(parts) < 2:
+        bot.reply_to(
+            message, 
+            "Usage: /subscribe &lt;coin_name&gt;\nExample: <code>/subscribe bitcoin</code>",
+            parse_mode='HTML')
+        return
 
+    coin = parts[1].lower() 
 
+    if coin not in SUPPORTED_COINS:
+        bot.reply_to(message, f"I don't track {coin}. Try: {', '.join(SUPPORTED_COINS)}")
+        return
 
-
-@bot.message_handler(commands=['bitcoin'])
-def cmd_bitcoin(message: Message) -> None:
-    get_data.subscribe(message.chat.id,'bitcoin')
-    text = f"You're monitoring bitcoin"
-
-    bot.reply_to(message=message,text=text)
-
-
-
-
-
-@bot.message_handler(commands=['ethereum'])
-def cmd_ethereum(message: Message) -> None:
-    get_data.subscribe(message.chat.id,'ethereum')
-    text = f"You're monitoring bitcoin"
-
-    bot.reply_to(message=message,text=text)
-
-
-
-
-@bot.message_handler(commands=['solana'])
-def cmd_solana(message: Message) -> None:
-    get_data.subscribe(message.chat.id,'solana')
-    text = f"You're monitoring bitcoin"
-
-    bot.reply_to(message=message,text=text)
+    # save to base
+    get_data.subscribe(message.chat.id, coin)
     
-@bot.message_handler(commands=['prices'])
+    bot.reply_to(message, f"✅ Done! Now monitoring {coin.capitalize()}.")
+   
+
+
+
+@bot.message_handler(commands=['price'])
 def cmd_view(message:Message) -> None:
-    viewers = get_data.viewing()
-    text = f"{viewers}"
+    parts = message.text.split()
+    
+    if len(parts) < 2:
+        bot.reply_to(
+            message, 
+            "Usage: /price &ltcoin_name&gt;\nExample: <code>/price bitcoin</code>`",
+            parse_mode='HTML')
+        return
+    
+    coin = parts[1]
+    if coin not in SUPPORTED_COINS:
+        bot.reply_to(message, f"I don't track {coin}. Try: {', '.join(SUPPORTED_COINS)}")
+        return
+    
+    for c, p in get_data.view(): #[('bitcoin', 81964.0), ('ethereum', 2339.34), ('solana', 97.76)] 
+        if c == coin:
+            price = p
+    bot.reply_to(message, f"price {coin}: {price}" )        
 
-    bot.reply_to(message=message,text=text)
+
 
 @bot.message_handler(commands=['button'])
 def cmd_button_message(message: Message) -> None:
@@ -94,10 +93,10 @@ def cmd_button_message(message: Message) -> None:
     item2 = KeyboardButton("/crypto_sub")
     
     
-    # Додаємо кнопку в розмітку
+
     markup.add(item1)
     markup.add(item2)
-    # Відправляємо повідомлення (ПЕРЕВІР ДУЖКИ!)
+
     bot.send_message(
         chat_id=message.chat.id, 
         text='Choose what you need', 

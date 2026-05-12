@@ -64,7 +64,7 @@ def add_user_info(chat_id:int, user_name: str, sql_file='sql/user_info.sql', db=
 
 
 
-def viewing(sql_file='sql/view.sql',db='data.db') -> dict:
+def view(sql_file='sql/view.sql',db='data.db') -> dict:
     with sqlite3.connect(db) as con:
         cur = con.cursor()
         with open(sql_file,"r") as f:
@@ -94,7 +94,7 @@ def unsubcribe(chat_id:int, coin: str, sql_file='sql/unsubscribe.sql', db='data.
         cur = con.cursor()
         with open(sql_file, "r") as f:
             query = f.read()
-        cur.execute(query(chat_id,coin))    
+        cur.execute(query,(chat_id,coin))    
 
 
 
