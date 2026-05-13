@@ -11,6 +11,10 @@ def init_db(sql_file = 'sql/tables.sql', db = 'data.db') -> None:
         with open(sql_file, "r") as f:
             query = f.read()
         cur.executescript(query)
+        cur.execute("""
+                ALTER TABLE subscribers 
+                ADD COLUMN percent REAL DEFAULT 0.1;
+                """)
 
 
 
