@@ -19,7 +19,8 @@ def cmd_start(message: Message) -> None:
         "\ncoins" \
         " Commands: " \
         "\n/subscribe"
-        "\n/price" \
+        "\n/price" 
+        "\n/unsubscribe"\
             )
     
 
@@ -29,6 +30,7 @@ def cmd_start(message: Message) -> None:
 
     except Error as e:
         print(f"beda: {e}")
+
 
 
 
@@ -59,6 +61,32 @@ def cmd_subscribe(message: Message) -> None:
 
 
 
+@bot.message_handler(commands=['unsubscribe'])
+def cmd_subscribe(message: Message) -> None:
+
+    parts = message.text.split()
+    
+    if len(parts) < 2:
+        bot.reply_to(
+            message, 
+            "Usage: /unsubscribe &lt;coin_name&gt;\nExample: <code>/unsubscribe bitcoin</code>",
+            parse_mode='HTML')
+        return
+
+    coin = parts[1].lower() 
+
+    if coin not in SUPPORTED_COINS:
+        bot.reply_to(message, f"I don't track {coin}. Try: {', '.join(SUPPORTED_COINS)}")
+        return
+
+    # save to base
+    get_data.unsubscribe(message.chat.id, coin)
+    
+    bot.reply_to(message, f"✅ Done! Now unmonitoring {coin.capitalize()}.")
+   
+
+
+
 @bot.message_handler(commands=['price'])
 def cmd_view(message:Message) -> None:
     parts = message.text.split()
@@ -79,6 +107,7 @@ def cmd_view(message:Message) -> None:
         if c == coin:
             price = p
     bot.reply_to(message, f"price {coin}: {price}" )        
+
 
 
 

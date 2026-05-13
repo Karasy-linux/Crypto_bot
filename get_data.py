@@ -88,7 +88,7 @@ def subscribe(chat_id:int, coin: str, sql_file='sql/subscribe.sql', db='data.db'
 
 
 
-def unsubcribe(chat_id:int, coin: str, sql_file='sql/unsubscribe.sql', db='data.db') -> None:
+def unsubscribe(chat_id:int, coin: str, sql_file='sql/unsubscribe.sql', db='data.db') -> None:
     con = sqlite3.connect(db)
     with con:
         cur = con.cursor()

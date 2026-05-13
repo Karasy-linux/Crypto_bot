@@ -1,1 +1,1 @@
-DELETE FROM subscribers WHERE user_id = ? AND coin = ?;
+DELETE FROM subscribers WHERE chat_id = ? AND coin = ?;
