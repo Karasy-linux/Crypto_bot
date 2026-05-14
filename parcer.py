@@ -1,5 +1,4 @@
 import time
-
 from get_data import update_data
 
 while True:

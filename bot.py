@@ -1,6 +1,10 @@
+import time
+import threading
 from sqlite3 import Error
+
 import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from telebot.apihelper import ApiTelegramException
 
 from config import TOKEN
 import get_data
@@ -30,6 +34,14 @@ def cmd_start(message: Message) -> None:
 
     except Error as e:
         print(f"beda: {e}")
+
+
+
+
+#_______________________________________________________________________________
+#_______________________________________________________________________________
+#_____________________________THE SUBSCRIBERS LOGIC_____________________________
+#_______________________________________________________________________________
 
 
 
@@ -110,6 +122,17 @@ def cmd_view(message:Message) -> None:
 
 
 
+def check_prices_loop() -> None:
+    alerts = get_data.get_alerts()
+
+    for change, chat_id, coin, old_price, new_price in alerts:
+        msg = f"You're coins {get_data.translate_coin(coin)} to exceed the threshold {change}\n"
+        try:
+            bot.send_message(chat_id=chat_id,text=msg)
+        except ApiTelegramException as e:
+            print("beda: {e}")
+        time.sleep(10)
+
 
 @bot.message_handler(commands=['button'])
 def cmd_button_message(message: Message) -> None:
@@ -122,7 +145,6 @@ def cmd_button_message(message: Message) -> None:
     item2 = KeyboardButton("/crypto_sub")
     
     
-
     markup.add(item1)
     markup.add(item2)
 
@@ -133,8 +155,7 @@ def cmd_button_message(message: Message) -> None:
     )
 
 
-
-
 if __name__ == '__main__':
     print("starts work")
+    threading.Thread(target=check_prices_loop, daemon=True).start()
     bot.infinity_polling() 

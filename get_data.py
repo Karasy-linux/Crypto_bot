@@ -29,7 +29,7 @@ def translate_coin(coin:str,db = 'data.db' ) -> int:
 
 
 
-def add_price(coin: str, new_price: float, db='data.db' ) -> None:
+def add_price(coin:str, new_price:float, db='data.db' ) -> None:
     asset_id = translate_coin(coin)
     if asset_id is None:
         print(f"Error {coin}")
@@ -46,7 +46,7 @@ def add_price(coin: str, new_price: float, db='data.db' ) -> None:
 
 
 
-def add_user_info(chat_id:int, user_name: str, sql_file='sql/user_info.sql', db='data.db') -> None:
+def add_user_info(chat_id:int, user_name:str, sql_file='sql/user_info.sql', db='data.db') -> None:
     con = sqlite3.connect(db)
     with con:
         cur = con.cursor()
@@ -77,7 +77,7 @@ def view(sql_file='sql/view.sql',db='data.db') -> dict:
 
 
 
-def subscribe(chat_id:int, coin: str, sql_file='sql/subscribe.sql', db='data.db') -> None:
+def subscribe(chat_id:int, coin:str, sql_file='sql/subscribe.sql', db='data.db') -> None:
     con = sqlite3.connect(db)
     with con:
         cur = con.cursor()
@@ -88,13 +88,28 @@ def subscribe(chat_id:int, coin: str, sql_file='sql/subscribe.sql', db='data.db'
 
 
 
-def unsubscribe(chat_id:int, coin: str, sql_file='sql/unsubscribe.sql', db='data.db') -> None:
+def unsubscribe(chat_id:int, coin:str, sql_file='sql/unsubscribe.sql', db='data.db') -> None:
     con = sqlite3.connect(db)
     with con:
         cur = con.cursor()
         with open(sql_file, "r") as f:
             query = f.read()
         cur.execute(query,(chat_id,coin))    
+
+
+
+
+def get_alerts(sql_file='sql/monitoring.sql',db='data.db') -> dict:
+    with sqlite3.connect(db) as con:
+        with open(sql_file,"r") as f:
+            query = f.read()
+        cur = con.cursor()
+        cur.execute(query)
+
+        alerts = cur.fetchall()
+        return alerts 
+        
+
 
 
 
