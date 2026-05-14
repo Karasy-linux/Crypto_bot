@@ -16,9 +16,13 @@ CREATE TABLE IF NOT EXISTS assets(
 CREATE TABLE IF NOT EXISTS subscribers(
     chat_id KEY,
     coin TEXT,
+    asset_id INTEGER,
+    percent REAL DEFAULT 0.1,
     PRIMARY KEY(chat_id, coin),
     FOREIGN KEY (chat_id) REFERENCES users(chat_id),
-    FOREIGN KEY (coin) REFERENCES assets(name)
+    FOREIGN KEY (coin) REFERENCES assets(name),
+    FOREIGN KEY (asset_id) REFERENCES assets(id)
+
 );
 
 

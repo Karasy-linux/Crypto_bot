@@ -10,16 +10,11 @@ def init_db(sql_file = 'sql/tables.sql', db = 'data.db') -> None:
         cur = con.cursor()
         with open(sql_file, "r") as f:
             query = f.read()
-        cur.executescript(query)
         try:
-            cur.execute("""
-                ALTER TABLE subscribers 
-                ADD COLUMN percent REAL DEFAULT 0.1;
-                """)
+            cur.executescript(query)
         except sqlite3.Error as e:
-            print(f"beda: {e}")
-        cur.execute("CREATE INDEX idx_history_coin_time ON history(asset_id, timestamp);")
-
+            print(e)
+    
 
 
 def seed_db(db = 'data.db') -> None:
