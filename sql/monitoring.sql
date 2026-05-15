@@ -1,3 +1,4 @@
+EXPLAIN QUERY PLAN
 WITH stats AS(
     SELECT 
         DISTINCT h_out.asset_id,
@@ -16,8 +17,7 @@ SELECT
     ((stats.new_price - stats.old_price) / stats.old_price * 100.0),
     s.chat_id,
     stats.asset_id,
-    stats.old_price,
-    stats.new_price
+    stats.old_price
     FROM subscribers s
 JOIN stats ON s.asset_id = stats.asset_id
 WHERE stats.old_price > 0 

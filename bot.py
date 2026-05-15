@@ -1,6 +1,7 @@
 import time
 import threading
 from sqlite3 import Error
+from loguru import logger 
 
 import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
@@ -99,6 +100,35 @@ def cmd_subscribe(message: Message) -> None:
 
 
 
+@bot.message_handler(commands=['change_percent'])
+def cmd_change(message:Message) -> None:
+    parts = message.text.split()
+
+    if len(parts) < 3:
+        bot.reply_to(
+            message, 
+            "Usage: /change_percent &ltcoin_name&gt;\nExample: <code>/change_percent bitcoin 0.**</code> - your percent",
+            parse_mode='HTML')
+        return
+    try:
+        coin = parts[1].lower()
+        percent = float(parts[2])
+        chat_id = message.chat.id
+        
+
+        get_data.change_percent(percent,coin,chat_id)
+        text = f"✅ Done! You changed the percent for <b>{coin}</b> to <b>{percent}</b>"
+
+        bot.reply_to(message,text=text,parse_mode='HTML')
+
+        logger.info(f"User {chat_id} updated {coin} to {percent}%")
+    except Exception as e:
+        print(e)
+        bot.reply_to(message,f"{parts[1].lower()} is invalid")
+  
+
+
+
 @bot.message_handler(commands=['price'])
 def cmd_view(message:Message) -> None:
     parts = message.text.split()
@@ -106,7 +136,7 @@ def cmd_view(message:Message) -> None:
     if len(parts) < 2:
         bot.reply_to(
             message, 
-            "Usage: /price &ltcoin_name&gt;\nExample: <code>/price bitcoin</code>`",
+            "Usage: /price &ltcoin_name&gt;\nExample: <code>/price bitcoin</code>",
             parse_mode='HTML')
         return
     
@@ -122,16 +152,19 @@ def cmd_view(message:Message) -> None:
 
 
 
+
 def check_prices_loop() -> None:
     alerts = get_data.get_alerts()
 
-    for change, chat_id, coin, old_price, new_price in alerts:
+    for change, chat_id, coin, old_price in alerts:
         msg = f"You're coins {get_data.translate_coin(coin)} to exceed the threshold {change}\n"
         try:
             bot.send_message(chat_id=chat_id,text=msg)
         except ApiTelegramException as e:
-            print("beda: {e}")
+            print(f"beda: {e}")
         time.sleep(10)
+
+
 
 
 @bot.message_handler(commands=['button'])
@@ -157,5 +190,5 @@ def cmd_button_message(message: Message) -> None:
 
 if __name__ == '__main__':
     print("starts work")
-    threading.Thread(target=check_prices_loop, daemon=True).start()
+    #threading.Thread(target=check_prices_loop, daemon=True).start()
     bot.infinity_polling() 

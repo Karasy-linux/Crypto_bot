@@ -1,5 +1,6 @@
 import sqlite3
 
+from loguru import logger
 import requests
 from config import API_KEY
 
@@ -46,7 +47,7 @@ def add_price(coin:str, new_price:float, db='data.db' ) -> None:
 
 
 
-def add_user_info(chat_id:int, user_name:str, sql_file='sql/user_info.sql', db='data.db') -> None:
+def add_user_info(chat_id:int, user_name:str,sql_file='sql/user_info.sql', db='data.db') -> None:
     con = sqlite3.connect(db)
     with con:
         cur = con.cursor()
@@ -83,7 +84,8 @@ def subscribe(chat_id:int, coin:str, sql_file='sql/subscribe.sql', db='data.db')
         cur = con.cursor()
         with open(sql_file, "r") as f:
             query = f.read()
-        cur.execute(query,(chat_id,coin))    
+        asset_id = translate_coin(coin)
+        cur.execute(query,(chat_id,coin,asset_id))    
 
 
 
@@ -94,10 +96,29 @@ def unsubscribe(chat_id:int, coin:str, sql_file='sql/unsubscribe.sql', db='data.
         cur = con.cursor()
         with open(sql_file, "r") as f:
             query = f.read()
-        cur.execute(query,(chat_id,coin))    
+        asset_id = translate_coin(coin)
+        cur.execute(query,(chat_id,coin,asset_id))    
 
 
 
+
+def change_percent(percent:float, coin:str, chat_id:int,sql_file='sql/change_percent.sql',db='data.db') -> None:
+    with sqlite3.connect(db) as con:
+        try:
+            with open(sql_file,"r") as f:
+                query = f.read()
+            cur = con.cursor()
+            cur.execute(query,(percent,chat_id,coin))
+
+            if cur.rowcount == 0:
+                logger.warning(f"Subscription not found: User {chat_id}, coin {coin}")
+                raise Exception("Subscription not found")
+            con.commit()
+            logger.success(f"Оновлено: User {chat_id}, coin {coin} -> {percent}%")
+
+        except sqlite3.Error as e:
+            logger.error(f"Error of the database: {e}")
+            raise
 
 def get_alerts(sql_file='sql/monitoring.sql',db='data.db') -> dict:
     with sqlite3.connect(db) as con:
