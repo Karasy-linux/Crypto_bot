@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Karasy-linux
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import time
 import threading
 from sqlite3 import Error
@@ -186,6 +189,22 @@ def cmd_button_message(message: Message) -> None:
         text='Choose what you need', 
         reply_markup=markup
     )
+
+
+
+
+@bot.message_handler(commands=['code'])
+def view_code(message:Message) -> None:
+    text =("""
+            this bot is open source project\\. Link to GitHub:\n
+            [Crypto\\_sender](https://github.com/Karasy-linux/Crypto_bot)
+            """)
+    bot.reply_to(message=message,
+                 text=text,
+                 parse_mode="MarkdownV2",
+                 disable_web_page_preview=True)
+
+
 
 
 if __name__ == '__main__':

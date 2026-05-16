@@ -149,6 +149,10 @@ session.headers.update({
 
 
 def update_data(endpoint="https://api.coingecko.com/api/v3/simple/price") -> None:
+    """
+    This function fetches the prices from CoinGecko 
+    to add to the database
+    """
     params ={
         "ids": 'bitcoin,ethereum,solana',
         "vs_currencies": 'usd'
@@ -165,7 +169,7 @@ def update_data(endpoint="https://api.coingecko.com/api/v3/simple/price") -> Non
             price = data.get(coin,{}).get('usd',0)
             add_price(coin,price)
 
-            print(f"Записую: {coin} -> {price}")
+            print(f"Record: {coin} -> {price}")
                   
 
     except requests.exceptions.HTTPError as e:
