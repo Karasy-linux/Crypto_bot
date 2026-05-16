@@ -1,27 +1,22 @@
 import sqlite3
 from config import COINS
+from get_data import QUERIES
 
 
-
-
-def init_db(sql_file = 'sql/tables.sql', db = 'data.db') -> None:
-    con = sqlite3.connect(db)
-    with con:
+def init_db(db = 'data.db') -> None:
+    with sqlite3.connect(db) as con:
+        query = QUERIES.get("tables")
         cur = con.cursor()
-        with open(sql_file, "r") as f:
-            query = f.read()
-        try:
-            cur.executescript(query)
-        except sqlite3.Error as e:
-            print(e)
-    
+
+        cur.executescript(query)
+
+
 
 
 def seed_db(db = 'data.db') -> None:
-    con = sqlite3.connect(db)
-    with con:
-        cur = con.cursor()
+    with sqlite3.connect(db) as con:
         query = "INSERT OR IGNORE INTO assets (id, name) VALUES (?, ?)"
+        cur = con.cursor()
         cur.executemany(query,(COINS))    
 
 

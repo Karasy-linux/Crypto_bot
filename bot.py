@@ -21,7 +21,7 @@ def cmd_start(message: Message) -> None:
     chat_id = message.chat.id
 
     text = ( 
-        f"Hello, {user_name if not user_name is None else "user"}" 
+        f"Hello, @{user_name or "user"}" 
         "\nthis bot for" 
         " to monitoring "
         "\ncoins" \
@@ -37,7 +37,7 @@ def cmd_start(message: Message) -> None:
         get_data.add_user_info(chat_id, user_name if user_name else "user")
 
     except Error as e:
-        print(f"beda: {e}")
+        logger.error(f"Error of the database {e}")
 
 
 
@@ -126,7 +126,7 @@ def cmd_change(message:Message) -> None:
 
         logger.info(f"User {chat_id} updated {coin} to {percent}%")
     except Exception as e:
-        print(e)
+        logger.error(f"change is failed \n {e}")
         bot.reply_to(message,f"{parts[1].lower()} is invalid")
   
 
@@ -164,7 +164,7 @@ def check_prices_loop() -> None:
         try:
             bot.send_message(chat_id=chat_id,text=msg)
         except ApiTelegramException as e:
-            print(f"beda: {e}")
+            logger.error(f"Telegram error: {e}")
         time.sleep(10)
 
 
@@ -172,10 +172,10 @@ def check_prices_loop() -> None:
 
 @bot.message_handler(commands=['button'])
 def cmd_button_message(message: Message) -> None:
-    # Створюємо клавіатуру
+    # Create the keyboard
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     
-    # Створюємо кнопкуVALUES (?, ?)", coins)
+    # Create the button VALUES (?, ?)", coins)
 
     item1 = KeyboardButton("/start")
     item2 = KeyboardButton("/crypto_sub")
