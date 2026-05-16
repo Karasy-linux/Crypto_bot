@@ -22,18 +22,18 @@ A lightweight and robust Telegram bot designed to monitor real-time cryptocurren
    git clone [https://github.com/Karasy-linux/Crypto_bot.git](https://github.com/Karasy-linux/Crypto_bot.git)
    cd Crypto_bot
 
-    Install dependencies:
-    Bash
+Install dependencies:
+Bash
 
-pip install -r requirements.txt
+```pip install -r requirements.txt```
 
 Configure Environment Variables:
 Create a .env file or export your API tokens:
 Bash
-
+```
 export API_KEY="your_coingecko_api_key"
 export BOT_TOKEN="your_telegram_bot_token"
-
+```
 Run the application:
 Bash
 
