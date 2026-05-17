@@ -1,6 +1,8 @@
 # Copyright (C) 2026 Karasy-linux
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
+from dotenv import load_dotenv
 import time
 import threading
 from sqlite3 import Error
@@ -10,8 +12,17 @@ import telebot
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from telebot.apihelper import ApiTelegramException
 
-from config import TOKEN
 import get_data
+
+
+
+
+#CASHING
+
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
+
+
 
 bot = telebot.TeleBot(token=TOKEN)
 
@@ -37,7 +48,7 @@ def cmd_start(message: Message) -> None:
         get_data.add_user_info(chat_id, user_name if user_name else "user")
 
     except Error as e:
-        logger.error(f"Error of the database {e}")
+        logger.warning(f"Error of the database {e}")
 
 
 

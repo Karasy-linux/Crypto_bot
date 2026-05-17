@@ -1,8 +1,9 @@
 import sqlite3
+import os
+from dotenv import load_dotenv
 
 from loguru import logger
 import requests
-from config import API_KEY
 
 
 
@@ -13,6 +14,9 @@ from config import API_KEY
 
 
 
+
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
 
 SQL_FILES = {
             "monitoring":"sql/monitoring.sql",
@@ -64,15 +68,17 @@ def add_price(coin:str, new_price:float, db='data.db' ) -> None:
     if asset_id is None:
         logger.error(f"Not founded {coin}")
         return 
-    try:
-        con = sqlite3.connect(db)
-        with con:
-            cur = con.cursor()
+    with sqlite3.connect(db) as con:
+        try:
             query = "INSERT INTO history (price,asset_id) VALUES (?,?);"
 
+            cur = con.cursor()
             cur.execute(query,(new_price,asset_id))
-    except sqlite3.Error as e:
-        logger.error(f"Error of the database \n {e}")
+            
+            con.commit()
+            logger.success(f"The price of {coin} was successfully added to the database")
+        except sqlite3.Error as e:
+            logger.error(f"Error of the database \n {e}")
 
 
 
@@ -84,11 +90,12 @@ def add_user_info(chat_id:int, user_name:str, db='data.db') -> None:
             query = "INSERT INTO users(chat_id,user_name) VALUES(?,?);"
             cur.execute(query,(chat_id,user_name,))
 
-            # Оце — логування рівня Senior розробника:
             logger.success(f"User @{user_name or 'unknown'} (ID: {chat_id}) was successfully added to the database")
             con.commit()
         except sqlite3.Error as e:
-            logger.error(f"User @{user_name or 'unknown'} (ID: {chat_id}) was UNSUCCESSFULLY added to the database")
+            logger.warning(f"User @{user_name or 'unknown'} (ID: {chat_id}) was UNSUCCESSFULLY added to the database")
+
+
 
 
 #_____________________________________________________________________________________________
@@ -124,7 +131,7 @@ def subscribe(chat_id:int, coin:str, db='data.db') -> None:
                 return
             
             asset_id = translate_coin(coin)
-            cur = cur.execute(query)
+            cur = con.cursor()
             cur.execute(query,(chat_id,coin,asset_id))
 
             logger.success(f"User (chat_id):{chat_id} subscribed to {coin}") 

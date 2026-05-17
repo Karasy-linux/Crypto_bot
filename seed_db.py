@@ -1,7 +1,12 @@
 import sqlite3
-from config import COINS
+import os
+from dotenv import load_dotenv
 from get_data import QUERIES
 
+
+
+load_dotenv()
+COINS = os.getenv("COINS")
 
 def init_db(db = 'data.db') -> None:
     with sqlite3.connect(db) as con:
