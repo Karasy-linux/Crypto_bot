@@ -1,3 +1,3 @@
 INSERT OR IGNORE INTO 
-    subscribers(chat_id,coin,asset_id) 
-    VALUES(?,?,?);
+    subscribers(chat_id,asset_id) 
+    VALUES(?,?);

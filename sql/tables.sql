@@ -14,23 +14,22 @@ CREATE TABLE IF NOT EXISTS assets(
 
 --subscribers
 CREATE TABLE IF NOT EXISTS subscribers(
-    chat_id KEY,
-    coin TEXT,
+    chat_id INTEGER,
     asset_id INTEGER,
     percent REAL DEFAULT 0.1,
-    PRIMARY KEY(chat_id, coin),
+    last_price REAL,
+    PRIMARY KEY(chat_id, asset_id),
     FOREIGN KEY (chat_id) REFERENCES users(chat_id),
-    FOREIGN KEY (coin) REFERENCES assets(name),
     FOREIGN KEY (asset_id) REFERENCES assets(id)
 
 );
 
 
 -- histoty
-CREATE TABLE IF NOT EXISTS history(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    price REAL,
-    asset_id INTEGER,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (asset_id) REFERENCES assets(id)
-);
+-- CREATE TABLE IF NOT EXISTS history(
+--    id INTEGER PRIMARY KEY AUTOINCREMENT,
+--    price REAL,
+--    asset_id INTEGER,
+--    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+--    FOREIGN KEY (asset_id) REFERENCES assets(id)
+--); 

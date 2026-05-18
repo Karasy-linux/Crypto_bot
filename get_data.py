@@ -19,7 +19,6 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
 SQL_FILES = {
-            "monitoring":"sql/monitoring.sql",
             "tables":"sql/tables.sql",
             "view":"sql/view.sql",
             "subscribe":"sql/subscribe.sql",
@@ -37,6 +36,16 @@ for query_name, path_name in SQL_FILES.items():
         QUERIES[query_name] = ""
 
 
+SUPPORTED_COINS = 'bitcoin,ethereum,solana'
+supported_coins = SUPPORTED_COINS.split(',')
+
+COINS = [
+        (1, 'bitcoin'),
+        (2, 'ethereum'),
+        (3, 'solana'),
+        ]
+
+
 
 
 #__________________________________________________________________________________________
@@ -47,30 +56,14 @@ for query_name, path_name in SQL_FILES.items():
 
 
 
-def translate_coin(coin:str,db = 'data.db' ) -> int:
-    with sqlite3.connect(db) as con:
-        try:
-            query = "SELECT id FROM assets WHERE name = (?);"
-
-            cur = con.cursor()
-            cur.execute(query,(coin,))
-            asset_id = cur.fetchone()
-
-            return asset_id[0] if asset_id else 0
-        except sqlite3.Error as e:
-            logger.error(f"Error of the database: {e}")
-
-
-
-
-def add_price(coin:str, new_price:float, db='data.db' ) -> None:
-    asset_id = translate_coin(coin)
+def add_price(asset_id:int, chat_id:int, new_price:float, db='data.db' ) -> None:
+    coin = translate_asset_id(asset_id)
     if asset_id is None:
-        logger.error(f"Not founded {coin}")
+        logger.error(f"Not founded {asset_id}")
         return 
     with sqlite3.connect(db) as con:
         try:
-            query = "INSERT INTO history (price,asset_id) VALUES (?,?);"
+            query = "INSERT INTO subscribers (last_price,asset_id,chat_id) VALUES (?,?,?);"
 
             cur = con.cursor()
             cur.execute(query,(new_price,asset_id))
@@ -100,112 +93,39 @@ def add_user_info(chat_id:int, user_name:str, db='data.db') -> None:
 
 #_____________________________________________________________________________________________
 #_____________________________________________________________________________________________
-#____________________________THE USER LOGIC___________________________________________________
+#____________________________THE GETS DATA____________________________________________________
 #_____________________________________________________________________________________________
 
 
 
-def view(db='data.db') -> dict:
+
+def translate_asset_id(asset_id:int,db = 'data.db' ) -> int:
     with sqlite3.connect(db) as con:
         try:
-            query = QUERIES.get("view",None)
-            if not query:
-                logger.error(f"view is not founded")
-                return
+            query = "SELECT name FROM assets WHERE id = (?);"
+
             cur = con.cursor()
-            cur.execute(query)    
-            res = cur.fetchall()
+            cur.execute(query,(asset_id,))
+            asset_id = cur.fetchone()
 
-            return res if res else None
-        except sqlite3.Error as e:
-            logger.error(f"error the database \n {e}")
-
-
-
-
-def subscribe(chat_id:int, coin:str, db='data.db') -> None:
-    with sqlite3.connect(db) as con:
-        try:    
-            query = QUERIES.get("subscribe",None)
-            if query is None:
-                return
-            
-            asset_id = translate_coin(coin)
-            cur = con.cursor()
-            cur.execute(query,(chat_id,coin,asset_id))
-
-            logger.success(f"User (chat_id):{chat_id} subscribed to {coin}") 
-            con.commit()  
-        except sqlite3.Error as e:
-            logger.error(f"Error of the database: \n{e}")
-
-
-
-def unsubscribe(chat_id:int, coin:str, db='data.db') -> None:
-    con = sqlite3.connect(db)
-    with con:
-        try:    
-            query = QUERIES.get("unsubscribe",None)
-            if query is None:
-                return 
-            asset_id = translate_coin(coin)
-            cur = con.cursor()
-            cur.execute(query,(chat_id,coin,asset_id))    
-            
-            logger.success(f"User (chat_id):{chat_id} unsubscribed to {coin}") 
-            con.commit()  
-        except sqlite3.Error as e:
-            logger.error(f"Error of the database: \n{e}")
-
-
-
-def change_percent(percent:float, coin:str, chat_id:int,db='data.db') -> None:
-    with sqlite3.connect(db) as con:
-        try:
-            query = """
-                    UPDATE subscribers
-                    SET percent = ?
-                    WHERE chat_id = ? AND coin = ?;
-                    """
-            cur = con.cursor()
-            cur.execute(query,(percent,chat_id,coin))
-
-            if cur.rowcount == 0:
-                logger.warning(f"Subscription not found: User {chat_id}, coin {coin}")
-                raise Exception("Subscription not found")
-            con.commit()
-            logger.success(f"Update: User {chat_id}, coin {coin} -> {percent}%")
-
+            return asset_id[0] if asset_id else 0
         except sqlite3.Error as e:
             logger.error(f"Error of the database: {e}")
-            raise
 
 
 
 
-def get_alerts(db='data.db') -> dict:
-    try:
-        with sqlite3.connect(db) as con:
-            query = QUERIES.get("monitoring")
-
+def get_data_subcribers(db='data.db'):
+    with sqlite3.connect(db) as con:
+        try:
+            query = "SELECT chat_id, asset_id, percent, last_price FROM subscribers;"
             cur = con.cursor()
             cur.execute(query)
 
-            alerts = cur.fetchall()
-            logger.success(f"Users get alart")
-            return alerts 
-
-    except sqlite3.Error as e:
-        logger.error(f"Error of the database {e}")
-        
-
-
-
-
-#_____________________________________________________________________________________________
-#_____________________________________________________________________________________________
-#_______________________THE UPDATE DATA LOGIC_________________________________________________
-#_____________________________________________________________________________________________#
+            for chat_id, asset_id, percent, last_price in cur.fetchall():
+                yield chat_id, asset_id, percent, last_price
+        except sqlite3.Error as e:
+            logger.error(f"fetch is failed {e}")    
 
 
 
@@ -216,13 +136,9 @@ session.headers.update({
 })
 
 
-def update_data(endpoint="https://api.coingecko.com/api/v3/simple/price") -> None:
-    """
-    This function fetches the prices from CoinGecko 
-    to add to the database
-    """
+def get_fresh_price(endpoint="https://api.coingecko.com/api/v3/simple/price") -> dict:
     params ={
-        "ids": 'bitcoin,ethereum,solana',
+        "ids": SUPPORTED_COINS,
         "vs_currencies": 'usd'
     }
     try:
@@ -231,21 +147,106 @@ def update_data(endpoint="https://api.coingecko.com/api/v3/simple/price") -> Non
             }
         response = session.get(endpoint,params=params,headers=headers, timeout=5)
         response.raise_for_status()
-        data = response.json()
-
-        for coin in data.keys():
-            price = data.get(coin,{}).get('usd',0)
-            add_price(coin,price)
-
-            print(f"Record: {coin} -> {price}")
-                  
-
+        return response.json()
+    
     except requests.exceptions.HTTPError as e:
-        logger.error(f"HTTP Error: {e.response.status_code}")
-    except sqlite3.Error as e:
-        logger.error(f"beda: {e}")    
+        logger.error(f"HTTP Error: {e.response.status_code}") 
     except Exception as e:
         logger.error(f"Full beda: {e}")
-    
 
+
+
+
+#_____________________________________________________________________________________________
+#_____________________________________________________________________________________________
+#____________________________THE USER LOGIC___________________________________________________
+#_____________________________________________________________________________________________
+
+
+
+
+def view(chat_id:int,asset_id:int,db='data.db') -> dict:
+    with sqlite3.connect(db) as con:
+        try:
+            query = QUERIES.get("view",None)
+            if not query:
+                logger.error(f"view is not founded")
+                return
+            cur = con.cursor()
+            cur.execute(query,(chat_id,asset_id))    
+            res = cur.fetchall()
+
+            return res if res else None
+        except sqlite3.Error as e:
+            logger.error(f"error the database \n {e}")
+
+
+
+
+def subscribe(chat_id:int, asset_id:int, db='data.db') -> None:
+    with sqlite3.connect(db) as con:
+        try:    
+            query = QUERIES.get("subscribe",None)
+            if query is None:
+                return
+            
+            coin = translate_asset_id(asset_id)
+            cur = con.cursor()
+            cur.execute(query,(chat_id,asset_id))
+
+            logger.success(f"User (chat_id):{chat_id} subscribed to {coin}") 
+            con.commit()  
+        except sqlite3.Error as e:
+            logger.error(f"Error of the database: \n{e}")
+
+
+
+
+def unsubscribe(chat_id:int, asset_id:int, db='data.db') -> None:
+    con = sqlite3.connect(db)
+    with con:
+        try:    
+            query = QUERIES.get("unsubscribe",None)
+            if query is None:
+                return 
+            coin = translate_asset_id(asset_id)
+            cur = con.cursor()
+            cur.execute(query,(chat_id,asset_id))    
+            
+            logger.success(f"User (chat_id):{chat_id} unsubscribed to {coin}") 
+            con.commit()  
+        except sqlite3.Error as e:
+            logger.error(f"Error of the database: \n{e}")
+
+
+
+
+def change_percent(percent:float, asset_id:int, chat_id:int,db='data.db') -> None:
+    with sqlite3.connect(db) as con:
+        try:
+            query = """
+                    UPDATE subscribers
+                    SET percent = ?
+                    WHERE chat_id = ? AND asset_id = ?;
+                    """
+            cur = con.cursor()
+            cur.execute(query,(percent,chat_id,asset_id))
+
+            if cur.rowcount == 0:
+                logger.warning(f"Subscription not found: User {chat_id}, asset_id {asset_id}")
+                raise Exception("Subscription not found")
+            con.commit()
+            logger.success(f"Update: User {chat_id}, asset_id {asset_id} -> {percent}%")
+
+        except sqlite3.Error as e:
+            logger.error(f"Error of the database: {e}")
+            raise
+
+
+
+
+#_____________________________________________________________________________________________
+#_____________________________________________________________________________________________
+#_______________________THE UPDATE DATA LOGIC_________________________________________________
+#_____________________________________________________________________________________________#
 
