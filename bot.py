@@ -177,14 +177,14 @@ async def price_monitor():
                 price = prices.get(coin,{}).get('usd',0)
 
                 if last_price == 0:
-                    get_data.add_price(asset_id, chat_id, price)
+                    get_data.update_price(asset_id, chat_id, price)
                     continue    
 
                 current_percent = (price - last_price) / last_price
                 if abs(current_percent) >= percent:
     
                     await bot.send_message(chat_id, f"🚨 {coin} changed!")
-                    get_data.add_price(asset_id, chat_id, price)
+                    get_data.update_price(asset_id, chat_id, price)
         except Error as e:
             logger.error(f"no price change was made: {e}")
 

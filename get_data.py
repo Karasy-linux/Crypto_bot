@@ -56,14 +56,18 @@ COINS = [
 
 
 
-def add_price(asset_id:int, chat_id:int, new_price:float, db='data.db' ) -> None:
+def update_price(asset_id:int, chat_id:int, new_price:float, db='data.db' ) -> None:
     coin = translate_asset_id(asset_id)
     if asset_id is None:
         logger.error(f"Not founded {asset_id}")
         return 
     with sqlite3.connect(db) as con:
         try:
-            query = "INSERT INTO subscribers (last_price,asset_id,chat_id) VALUES (?,?,?);"
+            query = """
+                    UPDATE subscribers 
+                    SET last_price 
+                    WHERE asset_id = ? AND chat_id = ?;
+                    """
 
             cur = con.cursor()
             cur.execute(query,(new_price,asset_id))
