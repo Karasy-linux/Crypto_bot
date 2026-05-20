@@ -1,7 +1,0 @@
-TOKEN = "Token from botfather"
-API_KEY = "YOU API_KEY" 
-COINS = [
-        (1, 'bitcoin'),
-        (2, 'ethereum'),
-        (3, 'solana'),
-        ]
